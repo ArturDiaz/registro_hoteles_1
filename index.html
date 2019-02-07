@@ -1,0 +1,283 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width= devoice-width, initial" charset="utf-8">
+<title>Documento sin título</title>
+<link rel="stylesheet" href="js-mobile/jquery.mobile-1.4.5.css">
+<script src="jquery.js"></script>
+<script src="js-mobile/jquery.mobile-1.4.5.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDaft-cdp8vyB1xlGpuTy2jkkADgoz0voE"></script>
+<style>
+
+	#divMapa, #mapaGuardado{
+		width: 100%;
+		height: 350px;
+		padding: 0;
+	}
+	#paginaRegistro, #paginaDatos{
+		width: 100%;
+		height: 100%;
+		padding: 0;
+	}
+	
+</style>
+	
+</head>
+
+<body>
+	<div data-role="page" id="paginaInicio">
+		<div data-role="header">
+			<h1>Gestion Hotel</h1>
+		</div>
+		<div data-role="content">
+			<a id="btnRegistrar" data-role="button">Registrar Hotel</a>
+			<a id="btnLista" data-role="button">Lista Hoteles</a>
+		</div>
+		<div data-role="footer">
+			<h1>Gestion Hotel</h1>
+		</div>
+	</div>
+	
+	
+	<div data-role="page" id="paginaRegistro">
+		<div data-role="header">
+			<h1>Registrar Hotel</h1>
+		</div>
+		<div data-role="content">
+			<form>
+				<div class="ui-field-contain">
+					<label>Nombre:</label>
+					<input type="text" id="nombre">
+				</div>
+				<div class="ui-field-contain">
+					<label>Ubicacion:</label>
+				</div>
+				<div data-role="content" id="divMapa">
+					
+				</div>
+				<div class="ui-field-contain">
+					<label>Ciudad:</label>
+					<input type="text" id="ciudad">
+				</div>
+				<div class="ui-field-contain">
+					<label>Telefono:</label>
+					<input type="text" id="telefono">
+				</div>
+				<div class="ui-field-contain">
+					<label>Estrellas:</label>
+					<input type="number" id="estrellas">
+				</div>
+				
+			</form>
+			<a id="btnGuardar" data-role="button">Registrar Hotel</a>
+			<a class="ui-btn btnVolver">Volver</a>
+		</div>
+		<div data-role="footer">
+			<h1>Registrar Hotel</h1>
+		</div>
+	</div>
+	
+	
+	<div data-role="page" id="paginaLista">
+		<div data-role="header">
+			<h1>Lista Hoteles</h1>
+		</div>
+		<div data-role="content">
+			<ul data-role="listview" id="mostrarHoteles"  data-inset="true">
+            </ul>
+			<a class="ui-btn btnVolver">Volver</a>
+		</div>
+	</div>
+	
+	
+	<div data-role="page" id="paginaDatos">
+		<div data-role="header">
+			<h1>Datos Hotel</h1>
+		</div>
+		<div data-role="content">
+			<div class="ui-field-contain">
+			<p id="datos1"></p>
+			</div>
+			<div data-role="content" id="mapaGuardado"></div>
+			<a data-role="button" id="btnAtras">Lista Hoteles</a>
+		</div>
+	</div>
+</body>
+<script>
+
+	function cambiarPagina(page){
+		$.mobile.changePage("#"+page,{
+			transition:"flow"
+		});
+	}
+	$(document).ready(function(){
+		
+		$("#btnRegistrar").click(function(){
+			cambiarPagina("paginaRegistro");
+			obtenerPosicitionActual();
+		});
+		$(".btnVolver").click(function(){
+			cambiarPagina("paginaInicio");
+		});
+		$("#btnAtras").click(function(){
+			cambiarPagina("paginaLista");
+		});
+		
+		$("#btnLista").click(function(){
+			
+			mostrarLista();
+			cambiarPagina("paginaLista");
+			$("#mostrarHoteles").listview("refresh");
+			
+		});
+		
+		
+		var hoteles = [];
+		
+		var marcadorRegistro;
+		var mapas;
+
+		
+		$("#btnGuardar").click(function(){
+			var nombre =$("#nombre").val();
+			var ciudad = $("#ciudad").val();
+			var telefono = $("#telefono").val();
+			var estrellas = $("#estrellas").val();
+			
+			if(nombre.trim().length == "" || ciudad.trim().length == "" || telefono.trim().length == "" || estrellas.trim().length == ""){
+				alert("Por favor Complete todo los campos.");
+				
+			}else if(marcadorRegistro == undefined){
+				
+            alert("Por favor ubique el hotel en el mapa");
+
+			}else{
+				var puntoX = {
+					nombre: nombre,
+					marcador: marcadorRegistro,
+					ciudad: ciudad,
+					telefono: telefono,
+					estrellas: estrellas,
+				
+				};
+				hoteles.push(puntoX);
+				alert("Se registro Correctamente!!");
+			
+				limpiarCampos();
+			}
+		});
+		
+		
+		function mostrarMapa(ubicacion){
+			var opciones = {
+				zoom: 10,
+				center: ubicacion,
+				mapTypeId: google.maps.MapTypeId.ROADMAP
+			};
+			mapa = new google.maps.Map(document.getElementById("divMapa"), opciones);
+			
+			var marcadores = new google.maps.Marker({
+				position: ubicacion,
+				map: mapa,
+				draggable: true,
+				title: "Mi Ubicacion"
+			});
+			marcadorRegistro = marcadores;
+			
+			
+		}
+		
+		function exito(loc){
+			var latlngX = new google.maps.LatLng(loc.coords.latitude, loc.coords.longitude);
+			mostrarMapa(latlngX);
+		}
+		function fallido(error) {
+        	if (error.code == 0) {
+				alert("No se puede obtener la posicion actual.");
+			} else if (error.code == 1) {
+				alert("Algo salio mal");
+			} else if (error.code == 2) {
+				alert("No has aceptado compartir tu posicion");
+			} else if (error.code == 3) {
+				alert("Hemos superado el tiempo de espera");
+			}
+		}
+		function obtenerPosicitionActual() {
+        	if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(exito, fallido, {
+					maximumAge: 500000,
+					enableHighAccuracy: true,
+					timeout: 6000
+				});
+			}
+		}
+		
+		function mostrarLista(){
+			
+			$("#mostrarHoteles").empty();
+			for(var i=0; i<hoteles.length; i++){
+								
+				var lista = "";
+				lista +="<a class='btnDatos1 ui-btn'>";
+				lista +="<h3>"+hoteles[i].nombre+" - Ciudad: " + hoteles[i].ciudad +"</h3>";
+				lista +='<p>' + hoteles[i].estrellas + " Estrellas" + '</p>';
+				lista +="</a>";
+				
+				var listasTod = "<li>"+lista+"</li>";
+				$("#mostrarHoteles").append(listasTod);
+				
+			}
+			
+		}
+		
+		
+		$("#mostrarHoteles").on("click","a", function(){
+			var indice = $(this).closest("li").index();
+
+        for (var i = 0; i < hoteles.length; i++) {
+            if (i == indice) {
+                cambiarPagina("paginaDatos");
+
+                var informacion = "<strong>Nombre: </strong>" + hoteles[i].nombre + "<br>";
+                informacion += "<strong>Ciudad: </strong>" + hoteles[i].ciudad + "<br>";
+                informacion += "<strong>Telefono: </strong>" + hoteles[i].telefono + "<br>";
+                informacion += "<strong>Estrellas: </strong>" + hoteles[i].estrellas + "<br>";
+                informacion += "<strong>Ubicacion: </strong><br>";
+                $("#datos1").html(informacion);
+
+
+                var latlang = new google.maps.LatLng(hoteles[i].marcador.getPosition().lat(), hoteles[i].marcador.getPosition().lng());
+                var opcionesMapa = {
+                    zoom: 10,
+                    center: latlang,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+
+                };
+                var mapaHotel = new google.maps.Map(document.getElementById("mapaGuardado"), opcionesMapa);
+
+                var marcadorNuevo = new google.maps.Marker({
+                    position: latlang,
+                    map: mapaHotel,
+                    draggable: false,
+                    title: "Hotel: " + hoteles[i].nombre
+                });
+				}
+			}
+		});
+		
+		
+		
+		function limpiarCampos(){
+			$("#nombre").val("");
+			$("#ciudad").val("");
+			$("#telefono").val("");
+			$("#estrellas").val("");
+			
+			//marcadorRegistro.setPosition();
+		}
+		
+
+		
+	});
+</script>
+</html>
